@@ -1,4 +1,5 @@
 """Ingest: load PDFs -> chunk -> embed (HuggingFace) -> store in ChromaDB (file-wise)."""
+import gc
 from functools import lru_cache
 
 import chromadb
@@ -13,7 +14,8 @@ from app import config
 def get_embeddings() -> HuggingFaceEmbeddings:
     return HuggingFaceEmbeddings(
         model_name=config.EMBED_MODEL,
-        encode_kwargs={"normalize_embeddings": True},
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={"normalize_embeddings": True, "batch_size": 8},
     )
 
 
@@ -54,15 +56,18 @@ def ingest_file(path) -> int:
             ids.append(f"{name}::p{page_no}::c{j}")
 
     emb = get_embeddings()
-    for i in range(0, len(docs), 64):
-        batch = docs[i : i + 64]
+    for i in range(0, len(docs), 16):
+        batch = docs[i : i + 16]
         col.add(
-            ids=ids[i : i + 64],
+            ids=ids[i : i + 16],
             documents=batch,
-            metadatas=metas[i : i + 64],
+            metadatas=metas[i : i + 16],
             embeddings=emb.embed_documents(batch),
         )
-    return len(docs)
+    count = len(docs)
+    del docs, metas, ids
+    gc.collect()
+    return count
 
 
 def ingest_all(force: bool = False) -> dict:
