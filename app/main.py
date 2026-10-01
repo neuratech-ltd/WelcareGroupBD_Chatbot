@@ -41,7 +41,7 @@ class AskRequest(BaseModel):
     file: str | None = None
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def home():
     return FileResponse("app/static/index.html")
 
@@ -83,5 +83,3 @@ def ask(req: AskRequest):
         raise HTTPException(500, str(e))
     except Exception as e:
         raise HTTPException(502, f"Could not get an answer: {e}")
-
-    
