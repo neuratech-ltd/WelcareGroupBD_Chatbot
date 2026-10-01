@@ -6,7 +6,7 @@ from groq import Groq
 from app import config
 from app.ingest import get_collection, get_embeddings
 
-NOT_FOUND = "I couldn't find this in the company documents."
+NOT_FOUND = "Unfortunately i don't have any information about this right now!"
 
 SYSTEM_PROMPT = f"""You are the internal assistant of {config.COMPANY_NAME}.
 Answer the question using ONLY the context provided.
