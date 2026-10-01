@@ -2,22 +2,18 @@ FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    HF_HOME=/app/.hf_cache \
+    FASTEMBED_CACHE_PATH=/app/.fastembed_cache \
     ANONYMIZED_TELEMETRY=False \
     TOKENIZERS_PARALLELISM=false \
-    OMP_NUM_THREADS=1 \
-    MKL_NUM_THREADS=1
+    OMP_NUM_THREADS=1
 
 WORKDIR /app
-
-# CPU-only torch keeps the image small (fits Render free tier)
-RUN pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Pre-download the embedding model so startup is fast
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+# Pre-download the embedding model (HuggingFace all-MiniLM-L6-v2, ONNX)
+RUN python -c "from fastembed import TextEmbedding; TextEmbedding('sentence-transformers/all-MiniLM-L6-v2')"
 
 COPY . .
 

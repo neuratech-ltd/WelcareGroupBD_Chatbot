@@ -3,20 +3,29 @@ import gc
 from functools import lru_cache
 
 import chromadb
-from langchain_huggingface import HuggingFaceEmbeddings
+from fastembed import TextEmbedding
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
 from app import config
 
 
+class Embedder:
+    """HuggingFace embedding model (all-MiniLM-L6-v2) run with ONNX: no PyTorch, low memory."""
+
+    def __init__(self, model_name: str):
+        self.model = TextEmbedding(model_name=model_name, threads=1)
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return [v.tolist() for v in self.model.embed(texts, batch_size=8)]
+
+    def embed_query(self, text: str) -> list[float]:
+        return next(iter(self.model.embed([text]))).tolist()
+
+
 @lru_cache(maxsize=1)
-def get_embeddings() -> HuggingFaceEmbeddings:
-    return HuggingFaceEmbeddings(
-        model_name=config.EMBED_MODEL,
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True, "batch_size": 8},
-    )
+def get_embeddings() -> Embedder:
+    return Embedder(config.EMBED_MODEL)
 
 
 @lru_cache(maxsize=1)
