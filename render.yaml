@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: welcare-rag
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: COMPANY_NAME
+        value: Welcare Group BD
